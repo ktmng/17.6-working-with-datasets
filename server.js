@@ -2,13 +2,13 @@ require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const MOVIES = require('./movies-data-small.json')
-console.log(process.env.API_TOKEN);
 
 const app = express()
 
-app.use(morgan('dev'))
+const morganSetting = process.env.NODE_ENV === 'production' ? 'tiny' : 'common'
+app.use(morgan(morganSetting))
 
-const PORT = 8000
+const PORT = process.env.PORT || 8000
 app.listen(PORT, () => {
   console.log(`Server listening at http://localhost:${PORT}`)
 })
@@ -23,15 +23,6 @@ app.use(function validateBearerToken(req, res, next) {
     // move to the next middleware
     next()
 })
-
-//TEST FOR AUTH: -------
-// const validTypes = [`Bug`, `Dark`, `Dragon`, `Electric`, `Fairy`, `Fighting`, `Fire`, `Flying`, `Ghost`, `Grass`, `Ground`, `Ice`, `Normal`, `Poison`, `Psychic`, `Rock`, `Steel`, `Water`]
-// function handleGetTypes(req, res) {
-//   res.json(validTypes)
-// }
-
-// app.get('/types', handleGetTypes)
-//TEST FOR AUTH: -------
 
 app.get('/movie', function handleGetMovie(req, res) {
     let response = MOVIES;
@@ -58,9 +49,8 @@ app.get('/movie', function handleGetMovie(req, res) {
     //to the supplied number.
     if (avg_vote) {
         const numAvgVote = parseFloat(avg_vote);
-        console.log(numAvgVote);
         if(Number.isNaN(numAvgVote)) {
-            return res.status(400).send('avgvote must be a #');
+            return res.status(400).send('avg_vote must be a #');
         }
         response = response.filter(movie => 
             movie.avg_vote >= numAvgVote)
@@ -70,7 +60,12 @@ app.get('/movie', function handleGetMovie(req, res) {
     res.json(response)
 })
 
-// function handleGetMovies(req, res) {
-//     res.send('Hello, Movies!')
-// }
-
+app.use((error, req, res, next) => {
+    let response
+    if (process.env.NODE_ENV === 'production') {
+      response = { error: { message: 'server error' }}
+    } else {
+      response = { error }
+    }
+    res.status(500).json(response)
+})
