@@ -24,6 +24,10 @@ app.use(function validateBearerToken(req, res, next) {
     next()
 })
 
+app.get('/', (req, res) => {
+    res.send('go to /movie to see the movies!');
+})
+
 app.get('/movie', function handleGetMovie(req, res) {
     let response = MOVIES;
     //The search options for genre, country, and/or average 
